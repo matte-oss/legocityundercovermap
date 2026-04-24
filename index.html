@@ -3,7 +3,6 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>LEGO City Undercover Interactive Map</title>
         <meta name="google-site-verification" content="kI7YRipDOHdpbQRmalk9-9oX0qcrIFSMxyqD2N1OTOY" />
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-fork-ribbon-css/0.2.2/gh-fork-ribbon.min.css" />
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css"
            integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA=="
            crossorigin=""/>
@@ -52,7 +51,7 @@
                 var params = (new URL(document.location)).searchParams;
                 language = params.get('language');
                 if (!language) {
-                    language = 'nl';
+                    language = 'en';
                 }
                 debug = params.get('debug');
                 if (!debug) {
@@ -120,18 +119,22 @@
 
                         var container = L.DomUtil.create('div');
                         var title = L.DomUtil.create('h1', '', container);
+                        var categoryTitle = markers[marker_type]["title"];
+                        var categoryTitleText = (categoryTitle && categoryTitle.constructor == Object)
+                            ? (categoryTitle[language] || categoryTitle["en"] || marker_type)
+                            : (categoryTitle || marker_type);
                         if (marker.title) {
                             if (marker.title.constructor == Object) {
                                 if (language in marker.title) {
                                     title.innerHTML = marker.title[language];
                                 } else {
-                                    title.innerHTML = marker_type;
+                                    title.innerHTML = categoryTitleText;
                                 }
                             } else {
                                 title.innerHTML = marker.title;
                             }
                         } else {
-                            title.innerHTML = marker_type;
+                            title.innerHTML = categoryTitleText;
                             if (debug) {
                                 title.innerHTML += " " + markers[marker_type]["markers"][marker_i]["coords"];
                             }
@@ -216,7 +219,7 @@
 
                     L.DomUtil.create('br', '', container);
 
-                    var lang, languages = ["nl", "en"];
+                    var lang, languages = ["en"];
 
                     for (lang in languages) {
                         lang = languages[lang];
@@ -238,6 +241,10 @@
                     L.DomUtil.create('br', '', container);
 
                     legenditems = L.DomUtil.create('ul', 'cf', container);
+
+                    if (window.innerWidth <= 375) {
+                        legenditems.style.display = "none";
+                    }
 
                     L.DomEvent.on(selectall, "click", L.DomEvent.stop);
                     L.DomEvent.on(selectall, "click", function(ev) {
@@ -350,12 +357,6 @@
                 width: 32px;
                 height: 32px;
             }
-            #forkme {
-                z-index: 1000;
-                right: 0;
-                position: absolute;
-
-            }
             body {
                 margin:0;
                 padding:0
@@ -388,7 +389,6 @@
         </style>
     </head>
     <body onload="onload()">
-        <a class="github-fork-ribbon" href="https://github.com/meeuw/legocityundercovermap" data-ribbon="Fork me on GitHub" title="Fork me on GitHub">Fork me on GitHub</a>
         <div id="mapid"></div>
     </body>
 </html>
