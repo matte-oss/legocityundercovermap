@@ -3,15 +3,72 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>LEGO City Undercover Interactive Map</title>
         <meta name="google-site-verification" content="kI7YRipDOHdpbQRmalk9-9oX0qcrIFSMxyqD2N1OTOY" />
-        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css"
-           integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA=="
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+           integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
            crossorigin=""/>
         <!-- Make sure you put this AFTER Leaflet's CSS -->
-        <script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js"
-           integrity="sha512-QVftwZFqvtRNi0ZyCtsznlKSWOStnDORoefr1enyq5mVL4tmKB3S/EnC3rRJcxCPavG10IcrVGSmPh6Qw5lwrg=="
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+           integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV/XN2GqaY="
            crossorigin=""></script>
         <script>
             var language, debug, tiles;
+            function exportProgress() {
+                var data = localStorage.getItem("completed") || "{}";
+                var encoded = btoa(data);
+                showProgressModal('export', encoded);
+            }
+            function importProgress(encoded) {
+                try {
+                    var data = atob(encoded);
+                    JSON.parse(data);
+                    localStorage.setItem("completed", data);
+                    location.reload();
+                } catch(e) {
+                    alert("Invalid progress code: " + e.message + ". Please make sure you pasted the full export string.");
+                }
+            }
+            function showProgressModal(mode, data) {
+                var overlay = document.getElementById("progress-overlay");
+                var modal = document.getElementById("progress-modal");
+                var title = document.getElementById("progress-modal-title");
+                var textarea = document.getElementById("progress-modal-textarea");
+                var actionBtn = document.getElementById("progress-modal-action");
+                overlay.style.display = "block";
+                modal.style.display = "block";
+                if (mode === "export") {
+                    title.textContent = "Export Progress";
+                    textarea.value = data;
+                    textarea.readOnly = true;
+                    textarea.placeholder = "";
+                    actionBtn.textContent = "Copy";
+                    actionBtn.onclick = function() {
+                        if (navigator.clipboard) {
+                            navigator.clipboard.writeText(textarea.value).then(function() {
+                                actionBtn.textContent = "Copied!";
+                                setTimeout(function() { actionBtn.textContent = "Copy"; }, 2000);
+                            });
+                        } else {
+                            textarea.select();
+                            document.execCommand("copy");
+                            actionBtn.textContent = "Copied!";
+                            setTimeout(function() { actionBtn.textContent = "Copy"; }, 2000);
+                        }
+                    };
+                } else {
+                    title.textContent = "Import Progress";
+                    textarea.value = "";
+                    textarea.readOnly = false;
+                    textarea.placeholder = "Paste your progress code here…";
+                    actionBtn.textContent = "Import";
+                    actionBtn.onclick = function() {
+                        importProgress(textarea.value.trim());
+                    };
+                }
+            }
+            function closeProgressModal() {
+                document.getElementById("progress-overlay").style.display = "none";
+                document.getElementById("progress-modal").style.display = "none";
+            }
             function update_markers(mymap, markers) {
                 var marker_type;
                 for (marker_type in markers) {
@@ -219,6 +276,22 @@
 
                     L.DomUtil.create('br', '', container);
 
+                    var exportbtn = L.DomUtil.create('a', '', container);
+                    exportbtn.href = '#';
+                    exportbtn.innerHTML = 'export progress';
+                    L.DomEvent.on(exportbtn, "click", L.DomEvent.stop);
+                    L.DomEvent.on(exportbtn, "click", function() { exportProgress(); });
+
+                    L.DomUtil.create('span', '', container).innerHTML = ' | ';
+
+                    var importbtn = L.DomUtil.create('a', '', container);
+                    importbtn.href = '#';
+                    importbtn.innerHTML = 'import progress';
+                    L.DomEvent.on(importbtn, "click", L.DomEvent.stop);
+                    L.DomEvent.on(importbtn, "click", function() { showProgressModal('import', ''); });
+
+                    L.DomUtil.create('br', '', container);
+
                     var lang, languages = ["en"];
 
                     for (lang in languages) {
@@ -386,9 +459,61 @@
                     width: 170px;
                 }
             }
+            #progress-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.5);
+                z-index: 9999;
+            }
+            #progress-modal {
+                display: none;
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: white;
+                padding: 16px;
+                border-radius: 8px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+                z-index: 10000;
+                width: 90%;
+                max-width: 400px;
+                font: 14px/16px Arial, Helvetica, sans-serif;
+            }
+            #progress-modal h3 {
+                margin: 0 0 8px 0;
+            }
+            #progress-modal textarea {
+                width: 100%;
+                height: 100px;
+                margin: 8px 0;
+                box-sizing: border-box;
+                font-size: 12px;
+            }
+            #progress-modal .modal-buttons {
+                text-align: right;
+            }
+            #progress-modal button {
+                margin-left: 8px;
+                padding: 6px 12px;
+                cursor: pointer;
+            }
         </style>
     </head>
     <body onload="onload()">
         <div id="mapid"></div>
+        <div id="progress-overlay" onclick="closeProgressModal()"></div>
+        <div id="progress-modal">
+            <h3 id="progress-modal-title"></h3>
+            <textarea id="progress-modal-textarea"></textarea>
+            <div class="modal-buttons">
+                <button id="progress-modal-action"></button>
+                <button onclick="closeProgressModal()">Close</button>
+            </div>
+        </div>
     </body>
 </html>
