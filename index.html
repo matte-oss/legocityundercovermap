@@ -70,7 +70,8 @@
                     ],
                 }).setView([0, 0], 2);
                 L.tileLayer('tiles/' + tiles +'/{z}/{x}/{y}.png', {
-                    maxZoom: 4,
+                    maxNativeZoom: 4,
+                    maxZoom: 7,
                 }).addTo(mymap);
 
                 var popup = L.popup();
