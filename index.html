@@ -9,7 +9,7 @@
         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
            crossorigin=""></script>
         <script>
-            var language, debug, tiles;
+            var debug, tiles;
             function exportProgress() {
                 var data = localStorage.getItem("completed") || "{}";
                 var encoded = btoa(encodeURIComponent(data));
@@ -104,10 +104,6 @@
             }
             function onload() {
                 var params = (new URL(document.location)).searchParams;
-                language = params.get('language');
-                if (!language) {
-                    language = 'en';
-                }
                 debug = params.get('debug');
                 if (!debug) {
                     debug = 0;
@@ -176,15 +172,11 @@
                         var title = L.DomUtil.create('h1', '', container);
                         var categoryTitle = markers[marker_type]["title"];
                         var categoryTitleText = (categoryTitle && categoryTitle.constructor == Object)
-                            ? (categoryTitle[language] || categoryTitle["en"] || marker_type)
+                            ? (categoryTitle["en"] || marker_type)
                             : (categoryTitle || marker_type);
                         if (marker.title) {
                             if (marker.title.constructor == Object) {
-                                if (language in marker.title) {
-                                    title.innerHTML = marker.title[language];
-                                } else {
-                                    title.innerHTML = categoryTitleText;
-                                }
+                                title.innerHTML = marker.title["en"] || categoryTitleText;
                             } else {
                                 title.innerHTML = marker.title;
                             }
@@ -290,20 +282,6 @@
 
                     L.DomUtil.create('br', '', container);
 
-                    var lang, languages = ["en"];
-
-                    for (lang in languages) {
-                        lang = languages[lang];
-                        var langbutton = L.DomUtil.create('a', 'languages', container);
-                        langbutton.href = '?language=' + lang;
-                        langbutton.innerHTML = lang;
-                        if (lang == language) {
-                            L.DomUtil.addClass(langbutton, "selected");
-                        }
-                    }
-
-                    L.DomUtil.create('br', '', container);
-
                     var selectall = L.DomUtil.create('a', 'selected', container);
                     selectall.href = '#';
                     selectall.innerHTML = 'all';
@@ -330,10 +308,11 @@
                     legenditems.setAttribute("id", "legenditems");
                     for (marker_type in markers) {
                         var title;
-                        if (language in markers[marker_type]["title"]) {
-                            title = markers[marker_type]["title"][language];
+                        var markerTitle = markers[marker_type]["title"];
+                        if (markerTitle && markerTitle.constructor == Object) {
+                            title = markerTitle["en"] || marker_type;
                         } else {
-                            title = marker_type;
+                            title = markerTitle || marker_type;
                         }
                         li = L.DomUtil.create('li', '', legenditems);
                         li.setAttribute("id", marker_type);
@@ -443,10 +422,6 @@
                 text-decoration: line-through;
             }
             .completed #complete {
-                text-decoration: line-through;
-            }
-            .languages {
-                padding: 0px 10px 0px 0px;
                 text-decoration: line-through;
             }
             @media screen and (max-width: 375px) {
