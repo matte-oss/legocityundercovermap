@@ -12,12 +12,12 @@
             var language, debug, tiles;
             function exportProgress() {
                 var data = localStorage.getItem("completed") || "{}";
-                var encoded = btoa(data);
+                var encoded = btoa(encodeURIComponent(data));
                 showProgressModal('export', encoded);
             }
             function importProgress(encoded) {
                 try {
-                    var data = atob(encoded);
+                    var data = decodeURIComponent(atob(encoded));
                     JSON.parse(data);
                     localStorage.setItem("completed", data);
                     location.reload();
